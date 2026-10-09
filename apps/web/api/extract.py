@@ -1,7 +1,8 @@
 """Extractor: fetches the media behind a Link and cuts audio Clips from it.
 
 POST JSON {url, maxClips, clipSeconds, skipSeconds}
-  -> {ok: true, durationSeconds, clips: [{offsetSeconds, audioBase64}]}
+  -> {ok: true, durationSeconds, platformTag: {title, artist} | null,
+      clips: [{offsetSeconds, audioBase64}]}
   -> {ok: false, reason: "unavailable" | "blocked"}
 
 Runs as a Vercel Python Function; `python3 api/extract.py` serves it locally.
@@ -59,6 +60,15 @@ def cut_clip(source, offset, length):
     return result.stdout
 
 
+def platform_tag(info):
+    """The song the platform itself credits (YouTube music credits, TikTok sounds, ...)."""
+    title = info.get("track")
+    if not title:
+        return None
+    artists = info.get("artists") or ([info["artist"]] if info.get("artist") else [])
+    return {"title": title, "artist": ", ".join(artists) or None}
+
+
 def classify(error):
     message = str(error).lower()
     return "blocked" if any(hint in message for hint in BLOCKED_HINTS) else "unavailable"
@@ -90,7 +100,7 @@ def extract(request):
                 duration, int(request["maxClips"]), float(request["clipSeconds"]), float(request["skipSeconds"])
             )
         ]
-        return {"ok": True, "durationSeconds": duration, "clips": clips}
+        return {"ok": True, "durationSeconds": duration, "platformTag": platform_tag(info), "clips": clips}
     finally:
         shutil.rmtree(workdir, ignore_errors=True)
 

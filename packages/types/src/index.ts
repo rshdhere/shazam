@@ -40,6 +40,13 @@ export interface Match extends Song {
   engine: EngineName;
 }
 
+/** The song name the hosting platform itself attaches to the media. */
+export interface PlatformTag {
+  platform: Platform;
+  title: string;
+  artist: string | null;
+}
+
 export type LookupStatus =
   "queued" | "fetching" | "listening" | "completed" | "failed";
 
@@ -50,6 +57,7 @@ export interface Lookup {
   link: Link;
   status: LookupStatus;
   matches: Match[];
+  platformTag: PlatformTag | null;
   failureReason: FailureReason | null;
   createdAt: Date;
   updatedAt: Date;

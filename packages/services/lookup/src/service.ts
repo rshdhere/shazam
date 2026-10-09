@@ -1,6 +1,7 @@
 import { lookups, matches, type Database } from "@shazam/drizzle";
 import type {
   Clip,
+  Platform,
   FailureReason,
   Hit,
   Lookup,
@@ -21,6 +22,13 @@ export interface LookupServiceDeps {
   resolveRedirect: (url: string) => Promise<string>;
   /** Hands a queued Lookup to the background runner. */
   startRun: (lookupId: string) => Promise<void>;
+}
+
+/** Platforms label unrecognised audio "Original audio"/"original sound - …"; that is not a song. */
+function meaningfulTag(tag: { title: string; artist: string | null } | null) {
+  if (!tag?.title.trim() || /^original (audio|sound)\b/i.test(tag.title.trim()))
+    return null;
+  return { title: tag.title.trim(), artist: tag.artist?.trim() || null };
 }
 
 export type SubmitResult =
@@ -58,12 +66,19 @@ export function createLookupService(deps: LookupServiceDeps) {
     return {
       id: row.id,
       link: {
-        platform: row.platform as Lookup["link"]["platform"],
+        platform: row.platform as Platform,
         mediaId: row.mediaId,
         url: row.linkUrl,
       },
       status: row.status as LookupStatus,
       failureReason: row.failureReason as FailureReason | null,
+      platformTag: row.platformTagTitle
+        ? {
+            platform: row.platform as Platform,
+            title: row.platformTagTitle,
+            artist: row.platformTagArtist,
+          }
+        : null,
       matches: matchRows.map(
         ({ id: _id, lookupId: _lookupId, ...m }): Match => ({
           ...m,
@@ -115,7 +130,16 @@ export function createLookupService(deps: LookupServiceDeps) {
       await setStatus(id, "failed", result.reason);
       return null;
     }
-    await setStatus(id, "listening");
+    const tag = meaningfulTag(result.platformTag);
+    await db
+      .update(lookups)
+      .set({
+        status: "listening",
+        platformTagTitle: tag?.title ?? null,
+        platformTagArtist: tag?.artist ?? null,
+        updatedAt: clock(),
+      })
+      .where(eq(lookups.id, id));
     return result.clips;
   }
 

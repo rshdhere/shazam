@@ -1,16 +1,25 @@
 "use client";
 
-import type { LookupStatus, Match } from "@shazam/types";
+import type { LookupStatus, Match, PlatformTag } from "@shazam/types";
 import { useState } from "react";
 import styles from "./page.module.css";
 
 interface LookupView {
   status: LookupStatus;
   matches: Match[];
+  platformTag: PlatformTag | null;
   failureReason: string | null;
 }
 
 const POLL_MS = 1500;
+
+const PLATFORM_NAMES: Record<PlatformTag["platform"], string> = {
+  youtube: "YouTube",
+  instagram: "Instagram",
+  x: "X",
+  pinterest: "Pinterest",
+  tiktok: "TikTok",
+};
 
 export function LookupForm() {
   const [link, setLink] = useState("");
@@ -44,7 +53,12 @@ export function LookupForm() {
       );
       return;
     }
-    setLookup({ status: body.status, matches: [], failureReason: null });
+    setLookup({
+      status: body.status,
+      matches: [],
+      platformTag: null,
+      failureReason: null,
+    });
     poll(body.lookupId);
   }
 
@@ -66,6 +80,13 @@ export function LookupForm() {
       {lookup && <p aria-live="polite">Status: {lookup.status}</p>}
       {lookup?.status === "failed" && (
         <p role="alert">Lookup failed ({lookup.failureReason}).</p>
+      )}
+      {lookup?.platformTag && (
+        <p>
+          Tagged by {PLATFORM_NAMES[lookup.platformTag.platform]}:{" "}
+          {lookup.platformTag.title}
+          {lookup.platformTag.artist && ` by ${lookup.platformTag.artist}`}
+        </p>
       )}
       {lookup?.status === "completed" && lookup.matches.length === 0 && (
         <p>No song recognised.</p>

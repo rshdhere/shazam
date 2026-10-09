@@ -12,6 +12,7 @@ export async function GET(
       link: lookup.link.url,
       status: lookup.status,
       matches: lookup.matches,
+      platformTag: lookup.platformTag,
       failureReason: lookup.failureReason,
     },
     { headers: { "cache-control": "no-store" } },

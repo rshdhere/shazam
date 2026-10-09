@@ -36,7 +36,14 @@ export function clip(offsetSeconds: number): Clip {
 }
 
 /** An Extractor that always returns the given result and records calls. */
-export function fakeExtractor(result: ExtractResult) {
+type FakeExtractResult =
+  | (Omit<Extract<ExtractResult, { ok: true }>, "platformTag"> & {
+      platformTag?: Extract<ExtractResult, { ok: true }>["platformTag"];
+    })
+  | Extract<ExtractResult, { ok: false }>;
+
+export function fakeExtractor(fake: FakeExtractResult) {
+  const result: ExtractResult = fake.ok ? { platformTag: null, ...fake } : fake;
   const calls: string[] = [];
   const discarded: Clip[] = [];
   const extractor: Extractor = {

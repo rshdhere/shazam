@@ -17,6 +17,7 @@ type ExtractorResponse =
   | {
       ok: true;
       durationSeconds: number;
+      platformTag: { title: string; artist: string | null } | null;
       clips: { offsetSeconds: number; audioBase64: string }[];
     }
   | { ok: false; reason: "unavailable" | "blocked" };
@@ -50,7 +51,12 @@ export function createHttpExtractor(config: {
           ),
         })),
       );
-      return { ok: true, durationSeconds: body.durationSeconds, clips };
+      return {
+        ok: true,
+        durationSeconds: body.durationSeconds,
+        platformTag: body.platformTag ?? null,
+        clips,
+      };
     },
     async discard(clips: Clip[]) {
       await config.clipStore.remove(clips.map((c) => c.url));

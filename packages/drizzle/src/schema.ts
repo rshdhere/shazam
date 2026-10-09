@@ -18,6 +18,8 @@ export const lookups = pgTable(
     linkUrl: text("link_url").notNull(),
     status: text("status").notNull(),
     failureReason: text("failure_reason"),
+    platformTagTitle: text("platform_tag_title"),
+    platformTagArtist: text("platform_tag_artist"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
   },

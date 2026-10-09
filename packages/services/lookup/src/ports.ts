@@ -1,7 +1,13 @@
 import type { Clip, EngineName, Hit, Link } from "@shazam/types";
 
 export type ExtractResult =
-  | { ok: true; durationSeconds: number; clips: Clip[] }
+  | {
+      ok: true;
+      durationSeconds: number;
+      /** What the platform labels the audio as, if anything. */
+      platformTag: { title: string; artist: string | null } | null;
+      clips: Clip[];
+    }
   | { ok: false; reason: "unavailable" | "blocked" };
 
 /** Fetches the media behind a Link and cuts Clips from it. */
