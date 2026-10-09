@@ -13,7 +13,7 @@ export interface Clip {
   offsetSeconds: number;
 }
 
-export type EngineName = "acrcloud";
+export type EngineName = "acrcloud" | "audd";
 
 export interface Song {
   title: string;

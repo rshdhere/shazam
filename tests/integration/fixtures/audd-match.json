@@ -1,0 +1,29 @@
+{
+  "status": "success",
+  "result": {
+    "artist": "Rick Astley",
+    "title": "Never Gonna Give You Up",
+    "album": "Whenever You Need Somebody",
+    "release_date": "1987-11-12",
+    "label": "RCA Records Label",
+    "timecode": "00:56",
+    "song_link": "https://lis.tn/NeverGonnaGiveYouUp",
+    "apple_music": {
+      "url": "https://music.apple.com/us/album/never-gonna-give-you-up/1559523357?i=1559523359",
+      "artwork": {
+        "url": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/2a/0a/2b/rick.jpg/{w}x{h}bb.jpg",
+        "width": 3000,
+        "height": 3000
+      },
+      "isrc": "GBARL9300135"
+    },
+    "spotify": {
+      "id": "4PTG3Z6ehGkBFwjybzWkR8",
+      "external_urls": { "spotify": "https://open.spotify.com/track/4PTG3Z6ehGkBFwjybzWkR8" },
+      "album": {
+        "images": [{ "url": "https://i.scdn.co/image/ab67616d0000b2735755e164993798e0c9ef7d7a", "width": 640, "height": 640 }]
+      },
+      "external_ids": { "isrc": "GBARL9300135" }
+    }
+  }
+}

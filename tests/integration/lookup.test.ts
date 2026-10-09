@@ -1,3 +1,4 @@
+import { selectEngines } from "@shazam/lookup";
 import { describe, expect, it } from "vitest";
 import {
   clip,
@@ -117,5 +118,59 @@ describe("Matches across Clips", () => {
     await app.submitAndRun(RICK);
 
     expect(discarded).toEqual([clip(2), clip(18)]);
+  });
+});
+
+describe("Recognition engines", () => {
+  it("asks the fallback engine only about Clips the primary did not recognise", async () => {
+    const { extractor } = fakeExtractor({
+      ok: true,
+      durationSeconds: 30,
+      clips: [clip(2), clip(14)],
+    });
+    const primary = fakeEngine("acrcloud", {
+      2: { song: song("Primary Heard This") },
+    });
+    const fallback = fakeEngine("audd", {
+      2: { song: song("Fallback Would Say This") },
+      14: { song: song("Only Fallback Heard This") },
+    });
+    const app = await createTestApp({
+      extractor,
+      engines: [primary.engine, fallback.engine],
+    });
+
+    const lookup = await app.submitAndRun(RICK);
+
+    expect(primary.calls.map((c) => c.offsetSeconds)).toEqual([2, 14]);
+    expect(fallback.calls.map((c) => c.offsetSeconds)).toEqual([14]);
+    expect(lookup.matches.map((m) => [m.title, m.engine])).toEqual([
+      ["Primary Heard This", "acrcloud"],
+      ["Only Fallback Heard This", "audd"],
+    ]);
+  });
+
+  it("follows the configured engine order", async () => {
+    const { extractor } = fakeExtractor({
+      ok: true,
+      durationSeconds: 12,
+      clips: [clip(2)],
+    });
+    const acrcloud = fakeEngine("acrcloud", {
+      2: { song: song("ACR Answer") },
+    });
+    const audd = fakeEngine("audd", { 2: { song: song("AudD Answer") } });
+    const app = await createTestApp({
+      extractor,
+      engines: selectEngines("audd,acrcloud", {
+        acrcloud: () => acrcloud.engine,
+        audd: () => audd.engine,
+      }),
+    });
+
+    const lookup = await app.submitAndRun(RICK);
+
+    expect(lookup.matches.map((m) => m.title)).toEqual(["AudD Answer"]);
+    expect(acrcloud.calls).toEqual([]);
   });
 });

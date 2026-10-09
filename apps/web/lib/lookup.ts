@@ -2,11 +2,13 @@ import "server-only";
 import { createNeonDatabase } from "@shazam/drizzle/neon";
 import {
   createAcrCloudEngine,
+  createAuddEngine,
   createHttpExtractor,
   createLookupService,
   blobClipStore,
   followRedirects,
   inlineClipStore,
+  selectEngines,
 } from "@shazam/lookup";
 
 function required(name: string): string {
@@ -56,12 +58,14 @@ export function lookupService(
         ? blobClipStore
         : inlineClipStore,
     }),
-    engines: [
-      createAcrCloudEngine({
-        host: required("ACRCLOUD_HOST"),
-        accessKey: required("ACRCLOUD_ACCESS_KEY"),
-        accessSecret: required("ACRCLOUD_ACCESS_SECRET"),
-      }),
-    ],
+    engines: selectEngines(process.env.RECOGNITION_ENGINES ?? "acrcloud,audd", {
+      acrcloud: () =>
+        createAcrCloudEngine({
+          host: required("ACRCLOUD_HOST"),
+          accessKey: required("ACRCLOUD_ACCESS_KEY"),
+          accessSecret: required("ACRCLOUD_ACCESS_SECRET"),
+        }),
+      audd: () => createAuddEngine({ apiToken: required("AUDD_API_TOKEN") }),
+    }),
   });
 }
