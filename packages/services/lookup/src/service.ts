@@ -4,13 +4,15 @@ import type {
   Platform,
   FailureReason,
   Hit,
+  Link,
   Lookup,
   LookupStatus,
   Match,
 } from "@shazam/types";
 import { isShortLink, parseLink } from "@shazam/validators";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, desc, eq } from "drizzle-orm";
 import { mergeMatches } from "./merge";
+import { isReusable, isRunning, isUniqueViolation } from "./reuse";
 import type { Extractor, RecognitionEngine } from "./ports";
 
 export interface LookupServiceDeps {
@@ -32,7 +34,8 @@ function meaningfulTag(tag: { title: string; artist: string | null } | null) {
 }
 
 export type SubmitResult =
-  { ok: true; lookup: Lookup } | { ok: false; error: "unsupported_link" };
+  | { ok: true; outcome: "started" | "joined" | "reused"; lookup: Lookup }
+  | { ok: false; error: "unsupported_link" };
 
 export interface ClipResult {
   clip: Clip;
@@ -99,25 +102,55 @@ export function createLookupService(deps: LookupServiceDeps) {
     }
   }
 
+  async function latestFor(link: Link): Promise<Lookup | null> {
+    const [row] = await db
+      .select({ id: lookups.id })
+      .from(lookups)
+      .where(
+        and(
+          eq(lookups.platform, link.platform),
+          eq(lookups.mediaId, link.mediaId),
+        ),
+      )
+      .orderBy(desc(lookups.createdAt))
+      .limit(1);
+    return row ? get(row.id) : null;
+  }
+
   async function submit(
     rawLink: string,
     _clientIp: string,
   ): Promise<SubmitResult> {
     const link = await canonicalLink(rawLink);
     if (!link) return { ok: false, error: "unsupported_link" };
+
+    const latest = await latestFor(link);
+    if (latest && isRunning(latest))
+      return { ok: true, outcome: "joined", lookup: latest };
+    if (latest && isReusable(latest, clock()))
+      return { ok: true, outcome: "reused", lookup: latest };
+
     const id = crypto.randomUUID();
     const now = clock();
-    await db.insert(lookups).values({
-      id,
-      platform: link.platform,
-      mediaId: link.mediaId,
-      linkUrl: link.url,
-      status: "queued",
-      createdAt: now,
-      updatedAt: now,
-    });
+    try {
+      await db.insert(lookups).values({
+        id,
+        platform: link.platform,
+        mediaId: link.mediaId,
+        linkUrl: link.url,
+        status: "queued",
+        createdAt: now,
+        updatedAt: now,
+      });
+    } catch (error) {
+      // Someone else started a Lookup for this Link a moment ago: join theirs.
+      const running = isUniqueViolation(error) ? await latestFor(link) : null;
+      if (running && isRunning(running))
+        return { ok: true, outcome: "joined", lookup: running };
+      throw error;
+    }
     await startRun(id);
-    return { ok: true, lookup: (await get(id))! };
+    return { ok: true, outcome: "started", lookup: (await get(id))! };
   }
 
   /** Step 1: fetch the media and cut Clips. Returns null when the Lookup failed. */

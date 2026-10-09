@@ -85,17 +85,23 @@ export async function createTestApp(deps: {
   const db = drizzle({ client: new PGlite(), schema }) as unknown as Database;
   await migrate(db as never, { migrationsFolder });
   const started: string[] = [];
+  let now = new Date("2026-10-09T12:00:00Z").getTime();
   const service = createLookupService({
     db,
     resolveRedirect: async (url) => url,
     ...deps,
-    clock: () => new Date(),
+    clock: () => new Date(now),
     startRun: async (lookupId) => {
       started.push(lookupId);
     },
   });
   return {
     service,
+    started,
+    /** Moves the fake clock forward. */
+    advance(ms: number) {
+      now += ms;
+    },
     /** Runs every Lookup started so far, like the background Workflow would. */
     async drain() {
       while (started.length) await service.run(started.shift()!);

@@ -19,7 +19,11 @@ export async function POST(request: Request) {
   if (!result.ok)
     return Response.json({ error: result.error }, { status: 400 });
   return Response.json(
-    { lookupId: result.lookup.id, status: result.lookup.status },
+    {
+      lookupId: result.lookup.id,
+      status: result.lookup.status,
+      outcome: result.outcome,
+    },
     { status: 202 },
   );
 }
