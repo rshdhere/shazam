@@ -1,158 +1,59 @@
-# Turborepo starter
+# What's that song?
 
-This Turborepo starter is maintained by the Turborepo core team.
+Paste an Instagram, X, YouTube, Pinterest or TikTok link and get the songs playing in it.
 
-## Using this example
+A Lookup downloads the media behind the Link, cuts a few short Clips from it, and asks ACRCloud (then AudD as a fallback) to recognise each one. The page shows every Match with the time it plays, plus the platform's own song label when there is one. Terms are defined in [CONTEXT.md](CONTEXT.md); design decisions are in [docs/adr](docs/adr).
 
-Run the following command:
+## Set up
 
-```sh
-npx create-turbo@latest
-```
+You need Node 24+, pnpm 11, Python 3 and accounts with Vercel, ACRCloud and AudD.
 
-## What's inside?
-
-This Turborepo includes the following packages/apps:
-
-### Apps and Packages
-
-- `web`: a [Next.js](https://nextjs.org/) app
-- `@shazam/ui`: a stub React component library shared by the `web` application
-- `@shazam/eslint-config`: `eslint` configurations (includes `@next/eslint-plugin-next` and `eslint-config-prettier`)
-- `@shazam/typescript-config`: `tsconfig.json`s used throughout the monorepo
-
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
-
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
+Run the setup wizard from the repo root:
 
 ```sh
-cd my-turborepo
-turbo build
+scripts/setup.sh
 ```
 
-Without global `turbo`, use your package manager:
+It walks you through each step and saves the values as it goes, so you can stop and re-run it:
+
+1. Sign in to Vercel and link the project (Root Directory `apps/web`).
+2. Create the Neon Postgres database and the Vercel Blob store.
+3. Enter the ACRCloud and AudD credentials and the engine order.
+4. Generate the Extractor secret.
+5. Optionally add cookies and a proxy, for when platforms block downloads.
+6. Pull the env into `apps/web/.env.local` and migrate the database.
+
+Pushing to `main` then deploys. Each build applies any pending migrations before building.
+
+## Develop
 
 ```sh
-cd my-turborepo
-npx turbo build
-pnpm exec turbo build
-pnpm exec turbo build
+pnpm install
+pnpm --filter web setup:extractor   # Python venv with yt-dlp and ffmpeg
+pnpm --filter web dev:extractor     # Extractor on http://localhost:3001
+pnpm dev                            # site on http://localhost:3000
 ```
 
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+## Test
 
 ```sh
-turbo build --filter=web
+pnpm test                           # integration tests (in-memory Postgres, fake engines)
+pnpm --filter web test:extractor    # Python Extractor tests
+pnpm check-types && pnpm lint
 ```
 
-Without global `turbo`:
+The smoke test runs one real Lookup against a deployment:
 
 ```sh
-npx turbo build --filter=web
-pnpm exec turbo build --filter=web
-pnpm exec turbo build --filter=web
+SMOKE_BASE_URL=https://your-deployment.vercel.app pnpm test:e2e
 ```
 
-### Develop
+If the deployment is protected, also set `VERCEL_AUTOMATION_BYPASS_SECRET`.
 
-To develop all apps and packages, run the following command:
+## Layout
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo dev
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo dev
-pnpm exec turbo dev
-pnpm exec turbo dev
-```
-
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo dev --filter=web
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-```
-
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo login
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo login
-pnpm exec turbo login
-pnpm exec turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo link
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo link
-pnpm exec turbo link
-pnpm exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+- `apps/web`: the Next.js site, the Lookup workflow and the Python Extractor (`api/extract.py`)
+- `packages/services/lookup`: the Lookup service, recognition engines and Extractor client
+- `packages/drizzle`: the schema and migrations
+- `packages/types`, `packages/validators`: shared types and Link parsing
+- `tests/integration`, `tests/e2e`: the integration tests and the deployed smoke test
