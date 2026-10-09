@@ -15,6 +15,13 @@
       "when": 1791511844474,
       "tag": "0001_lively_fallen_one",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791513186835,
+      "tag": "0002_cultured_miracleman",
+      "breakpoints": true
     }
   ]
 }

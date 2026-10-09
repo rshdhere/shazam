@@ -53,3 +53,15 @@ export const matches = pgTable(
   },
   (t) => [index("matches_lookup_idx").on(t.lookupId)],
 );
+
+/** One row per new Lookup an IP started; reused and joined Lookups add none. */
+export const rateLimitHits = pgTable(
+  "rate_limit_hits",
+  {
+    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+    /** SHA-256 of the client IP, so raw addresses are never stored. */
+    clientKey: text("client_key").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+  },
+  (t) => [index("rate_limit_hits_client_idx").on(t.clientKey, t.createdAt)],
+);

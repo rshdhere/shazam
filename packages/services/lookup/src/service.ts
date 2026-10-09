@@ -12,6 +12,7 @@ import type {
 import { isShortLink, parseLink } from "@shazam/validators";
 import { and, asc, desc, eq } from "drizzle-orm";
 import { mergeMatches } from "./merge";
+import { createRateLimiter } from "./rate-limit";
 import { isReusable, isRunning, isUniqueViolation } from "./reuse";
 import type { Extractor, RecognitionEngine } from "./ports";
 
@@ -48,7 +49,8 @@ async function withRetries<T>(step: () => Promise<T>): Promise<T> {
 
 export type SubmitResult =
   | { ok: true; outcome: "started" | "joined" | "reused"; lookup: Lookup }
-  | { ok: false; error: "unsupported_link" };
+  | { ok: false; error: "unsupported_link" }
+  | { ok: false; error: "rate_limited"; retryAfterSeconds: number };
 
 export interface ClipResult {
   clip: Clip;
@@ -59,6 +61,7 @@ export type LookupService = ReturnType<typeof createLookupService>;
 
 export function createLookupService(deps: LookupServiceDeps) {
   const { db, extractor, engines, clock, startRun, resolveRedirect } = deps;
+  const rateLimiter = createRateLimiter(db, clock);
 
   async function setStatus(
     id: string,
@@ -132,7 +135,7 @@ export function createLookupService(deps: LookupServiceDeps) {
 
   async function submit(
     rawLink: string,
-    _clientIp: string,
+    clientIp: string,
   ): Promise<SubmitResult> {
     const link = await canonicalLink(rawLink);
     if (!link) return { ok: false, error: "unsupported_link" };
@@ -142,6 +145,11 @@ export function createLookupService(deps: LookupServiceDeps) {
       return { ok: true, outcome: "joined", lookup: latest };
     if (latest && isReusable(latest, clock()))
       return { ok: true, outcome: "reused", lookup: latest };
+
+    // Only new Lookups count against the IP; reused and joined ones are free.
+    const retryAfterSeconds = await rateLimiter.retryAfterSeconds(clientIp);
+    if (retryAfterSeconds !== null)
+      return { ok: false, error: "rate_limited", retryAfterSeconds };
 
     const id = crypto.randomUUID();
     const now = clock();
@@ -162,6 +170,7 @@ export function createLookupService(deps: LookupServiceDeps) {
         return { ok: true, outcome: "joined", lookup: running };
       throw error;
     }
+    await rateLimiter.record(clientIp);
     await startRun(id);
     return { ok: true, outcome: "started", lookup: (await get(id))! };
   }

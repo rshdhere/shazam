@@ -16,6 +16,14 @@ export async function POST(request: Request) {
     await start(lookupWorkflow, [lookupId]);
   });
   const result = await service.submit(parsed.data.link, clientIp);
+  if (!result.ok && result.error === "rate_limited")
+    return Response.json(
+      { error: result.error, retryAfterSeconds: result.retryAfterSeconds },
+      {
+        status: 429,
+        headers: { "retry-after": String(result.retryAfterSeconds) },
+      },
+    );
   if (!result.ok)
     return Response.json({ error: result.error }, { status: 400 });
   return Response.json(
