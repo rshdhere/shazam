@@ -7,7 +7,7 @@ import type {
   LookupStatus,
   Match,
 } from "@shazam/types";
-import { parseLink } from "@shazam/validators";
+import { isShortLink, parseLink } from "@shazam/validators";
 import { asc, eq } from "drizzle-orm";
 import { mergeMatches } from "./merge";
 import type { Extractor, RecognitionEngine } from "./ports";
@@ -17,6 +17,8 @@ export interface LookupServiceDeps {
   extractor: Extractor;
   engines: RecognitionEngine[];
   clock: () => Date;
+  /** Follows a short share link's redirects to the URL it points at. */
+  resolveRedirect: (url: string) => Promise<string>;
   /** Hands a queued Lookup to the background runner. */
   startRun: (lookupId: string) => Promise<void>;
 }
@@ -32,7 +34,7 @@ export interface ClipResult {
 export type LookupService = ReturnType<typeof createLookupService>;
 
 export function createLookupService(deps: LookupServiceDeps) {
-  const { db, extractor, engines, clock, startRun } = deps;
+  const { db, extractor, engines, clock, startRun, resolveRedirect } = deps;
 
   async function setStatus(
     id: string,
@@ -73,11 +75,20 @@ export function createLookupService(deps: LookupServiceDeps) {
     };
   }
 
+  async function canonicalLink(rawLink: string) {
+    if (!isShortLink(rawLink)) return parseLink(rawLink);
+    try {
+      return parseLink(await resolveRedirect(rawLink.trim()));
+    } catch {
+      return null;
+    }
+  }
+
   async function submit(
     rawLink: string,
     _clientIp: string,
   ): Promise<SubmitResult> {
-    const link = parseLink(rawLink);
+    const link = await canonicalLink(rawLink);
     if (!link) return { ok: false, error: "unsupported_link" };
     const id = crypto.randomUUID();
     const now = clock();

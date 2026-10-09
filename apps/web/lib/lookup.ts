@@ -5,6 +5,7 @@ import {
   createHttpExtractor,
   createLookupService,
   blobClipStore,
+  followRedirects,
   inlineClipStore,
 } from "@shazam/lookup";
 
@@ -46,6 +47,7 @@ export function lookupService(
     db,
     clock: () => new Date(),
     startRun,
+    resolveRedirect: (url) => followRedirects(url),
     extractor: createHttpExtractor({
       endpoint: extractorEndpoint(),
       headers: extractorHeaders(),

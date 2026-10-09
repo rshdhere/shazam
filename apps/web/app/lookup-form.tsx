@@ -39,7 +39,7 @@ export function LookupForm() {
     if (!res.ok) {
       setError(
         body.error === "unsupported_link"
-          ? "That link isn't supported yet."
+          ? "That link isn't supported. Paste an Instagram, X, YouTube, Pinterest or TikTok link."
           : "Something went wrong.",
       );
       return;
@@ -58,7 +58,7 @@ export function LookupForm() {
           required
           value={link}
           onChange={(e) => setLink(e.target.value)}
-          placeholder="https://www.youtube.com/watch?v=…"
+          placeholder="https://www.instagram.com/reel/…"
         />
         <button type="submit">Identify</button>
       </form>

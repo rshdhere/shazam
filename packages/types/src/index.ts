@@ -1,4 +1,4 @@
-export type Platform = "youtube";
+export type Platform = "youtube" | "instagram" | "x" | "pinterest" | "tiktok";
 
 /** A Link reduced to the media it points to. */
 export interface Link {

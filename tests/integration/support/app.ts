@@ -73,12 +73,14 @@ export function fakeEngine(
 export async function createTestApp(deps: {
   extractor: Extractor;
   engines: RecognitionEngine[];
+  resolveRedirect?: (url: string) => Promise<string>;
 }) {
   const db = drizzle({ client: new PGlite(), schema }) as unknown as Database;
   await migrate(db as never, { migrationsFolder });
   const started: string[] = [];
   const service = createLookupService({
     db,
+    resolveRedirect: async (url) => url,
     ...deps,
     clock: () => new Date(),
     startRun: async (lookupId) => {
