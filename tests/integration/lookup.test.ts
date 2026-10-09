@@ -42,3 +42,80 @@ describe("Lookup", () => {
     ]);
   });
 });
+
+describe("Matches across Clips", () => {
+  it("lists every distinct song in order of appearance", async () => {
+    const { extractor } = fakeExtractor({
+      ok: true,
+      durationSeconds: 60,
+      clips: [clip(2), clip(14), clip(26), clip(38), clip(50)],
+    });
+    const { engine } = fakeEngine("acrcloud", {
+      38: { song: song("Second Song") },
+      2: { song: song("First Song") },
+    });
+    const app = await createTestApp({ extractor, engines: [engine] });
+
+    const lookup = await app.submitAndRun(RICK);
+
+    expect(lookup.status).toBe("completed");
+    expect(lookup.matches.map((m) => [m.title, m.timestampSeconds])).toEqual([
+      ["First Song", 2],
+      ["Second Song", 38],
+    ]);
+  });
+
+  it("lists a song heard in several Clips once, at its earliest timestamp with its best confidence", async () => {
+    const { extractor } = fakeExtractor({
+      ok: true,
+      durationSeconds: 40,
+      clips: [clip(2), clip(11), clip(20), clip(30)],
+    });
+    const hook = song("Hook", "Band", { isrc: "USRC17607839" });
+    const { engine } = fakeEngine("acrcloud", {
+      11: { song: hook, confidence: 70 },
+      20: { song: { ...hook, title: "Hook (Radio Edit)" }, confidence: 95 },
+      30: { song: hook, confidence: 80 },
+    });
+    const app = await createTestApp({ extractor, engines: [engine] });
+
+    const lookup = await app.submitAndRun(RICK);
+
+    expect(lookup.matches).toHaveLength(1);
+    expect(lookup.matches[0]).toMatchObject({
+      timestampSeconds: 11,
+      confidence: 95,
+    });
+  });
+
+  it("treats the same title and artist without an ISRC as one song", async () => {
+    const { extractor } = fakeExtractor({
+      ok: true,
+      durationSeconds: 30,
+      clips: [clip(2), clip(18)],
+    });
+    const { engine } = fakeEngine("acrcloud", {
+      2: { song: song("Levitating", "Dua Lipa") },
+      18: { song: song("levitating ", "DUA LIPA") },
+    });
+    const app = await createTestApp({ extractor, engines: [engine] });
+
+    const lookup = await app.submitAndRun(RICK);
+
+    expect(lookup.matches).toHaveLength(1);
+  });
+
+  it("discards the Clips once the Lookup completes", async () => {
+    const { extractor, discarded } = fakeExtractor({
+      ok: true,
+      durationSeconds: 30,
+      clips: [clip(2), clip(18)],
+    });
+    const { engine } = fakeEngine("acrcloud", {});
+    const app = await createTestApp({ extractor, engines: [engine] });
+
+    await app.submitAndRun(RICK);
+
+    expect(discarded).toEqual([clip(2), clip(18)]);
+  });
+});

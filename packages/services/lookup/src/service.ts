@@ -9,6 +9,7 @@ import type {
 } from "@shazam/types";
 import { parseLink } from "@shazam/validators";
 import { asc, eq } from "drizzle-orm";
+import { mergeMatches } from "./merge";
 import type { Extractor, RecognitionEngine } from "./ports";
 
 export interface LookupServiceDeps {
@@ -116,27 +117,21 @@ export function createLookupService(deps: LookupServiceDeps) {
     return { clip, hit: null };
   }
 
-  /** Step 3: turn per-Clip results into Matches and complete the Lookup. */
+  /** Step 3: merge per-Clip results into Matches and complete the Lookup. */
   async function complete(id: string, results: ClipResult[]) {
-    const found = results.flatMap(({ clip, hit }) =>
-      hit
-        ? [
-            {
-              lookupId: id,
-              ...hit.song,
-              timestampSeconds: clip.offsetSeconds,
-              confidence: hit.confidence,
-              engine: hit.engine,
-            },
-          ]
-        : [],
-    );
-    if (found.length) await db.insert(matches).values(found);
+    const merged = mergeMatches(results);
+    if (merged.length) {
+      await db
+        .insert(matches)
+        .values(merged.map((m) => ({ lookupId: id, ...m })));
+    }
     await setStatus(id, "completed");
+    await extractor.discard(results.map((r) => r.clip));
   }
 
-  async function fail(id: string, reason: FailureReason) {
+  async function fail(id: string, reason: FailureReason, clips: Clip[] = []) {
     await setStatus(id, "failed", reason);
+    if (clips.length) await extractor.discard(clips);
   }
 
   /** Runs every step inline; the Workflow runs the same steps durably. */

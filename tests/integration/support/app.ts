@@ -38,13 +38,17 @@ export function clip(offsetSeconds: number): Clip {
 /** An Extractor that always returns the given result and records calls. */
 export function fakeExtractor(result: ExtractResult) {
   const calls: string[] = [];
+  const discarded: Clip[] = [];
   const extractor: Extractor = {
     async extract(link) {
       calls.push(link.url);
       return result;
     },
+    async discard(clips) {
+      discarded.push(...clips);
+    },
   };
-  return { extractor, calls };
+  return { extractor, calls, discarded };
 }
 
 /** An engine that hears `songs[offset]` in the Clip at that offset. */
@@ -86,6 +90,13 @@ export async function createTestApp(deps: {
     /** Runs every Lookup started so far, like the background Workflow would. */
     async drain() {
       while (started.length) await service.run(started.shift()!);
+    },
+    /** Submits a Link, runs its Lookup to the end and returns it. */
+    async submitAndRun(link: string, clientIp = "203.0.113.1") {
+      const submitted = await service.submit(link, clientIp);
+      if (!submitted.ok) throw new Error(submitted.error);
+      await this.drain();
+      return (await service.get(submitted.lookup.id))!;
     },
   };
 }

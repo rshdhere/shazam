@@ -38,10 +38,11 @@ def ffmpeg_path():
 
 
 def plan_clips(duration, max_clips, clip_seconds, skip_seconds):
-    """Offsets (seconds) of up to max_clips evenly spaced Clips."""
+    """(offset, length) of up to max_clips evenly spaced, non-overlapping Clips."""
     if duration < skip_seconds + clip_seconds:
         return [(0.0, duration)]
     last = duration - clip_seconds
+    max_clips = max(1, min(max_clips, int((duration - skip_seconds) // clip_seconds)))
     if max_clips == 1:
         return [((skip_seconds + last) / 2, clip_seconds)]
     step = (last - skip_seconds) / (max_clips - 1)

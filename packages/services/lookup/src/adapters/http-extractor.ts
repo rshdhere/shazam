@@ -7,12 +7,11 @@ export interface ClipPlan {
   skipSeconds: number;
 }
 
-/** Stores one Clip's audio somewhere engines can fetch it, returning its URL. */
-export type StoreClip = (
-  lookupId: string,
-  index: number,
-  audio: Uint8Array,
-) => Promise<string>;
+/** Holds Clip audio somewhere engines can fetch it while a Lookup runs. */
+export interface ClipStore {
+  put(lookupId: string, index: number, audio: Uint8Array): Promise<string>;
+  remove(urls: string[]): Promise<void>;
+}
 
 type ExtractorResponse =
   | {
@@ -27,7 +26,7 @@ export function createHttpExtractor(config: {
   endpoint: string;
   headers?: Record<string, string>;
   plan: ClipPlan;
-  storeClip: StoreClip;
+  clipStore: ClipStore;
   fetch?: typeof fetch;
 }): Extractor {
   const http = config.fetch ?? fetch;
@@ -44,7 +43,7 @@ export function createHttpExtractor(config: {
       const clips: Clip[] = await Promise.all(
         body.clips.map(async (c, i) => ({
           offsetSeconds: c.offsetSeconds,
-          url: await config.storeClip(
+          url: await config.clipStore.put(
             lookupId,
             i,
             Buffer.from(c.audioBase64, "base64"),
@@ -52,6 +51,9 @@ export function createHttpExtractor(config: {
         })),
       );
       return { ok: true, durationSeconds: body.durationSeconds, clips };
+    },
+    async discard(clips: Clip[]) {
+      await config.clipStore.remove(clips.map((c) => c.url));
     },
   };
 }

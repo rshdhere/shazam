@@ -4,8 +4,8 @@ import {
   createAcrCloudEngine,
   createHttpExtractor,
   createLookupService,
-  storeClipInBlob,
-  type StoreClip,
+  blobClipStore,
+  inlineClipStore,
 } from "@shazam/lookup";
 
 function required(name: string): string {
@@ -36,10 +36,6 @@ function extractorHeaders(): Record<string, string> {
   return headers;
 }
 
-/** Without a Blob store (local dev), Clips travel as data: URLs. */
-const storeClipInline: StoreClip = async (_lookupId, _index, audio) =>
-  `data:audio/mpeg;base64,${Buffer.from(audio).toString("base64")}`;
-
 let db: ReturnType<typeof createNeonDatabase> | undefined;
 
 export function lookupService(
@@ -53,10 +49,10 @@ export function lookupService(
     extractor: createHttpExtractor({
       endpoint: extractorEndpoint(),
       headers: extractorHeaders(),
-      plan: { maxClips: 1, clipSeconds: 10, skipSeconds: 2 },
-      storeClip: process.env.BLOB_READ_WRITE_TOKEN
-        ? storeClipInBlob
-        : storeClipInline,
+      plan: { maxClips: 5, clipSeconds: 10, skipSeconds: 2 },
+      clipStore: process.env.BLOB_READ_WRITE_TOKEN
+        ? blobClipStore
+        : inlineClipStore,
     }),
     engines: [
       createAcrCloudEngine({

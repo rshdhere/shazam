@@ -20,7 +20,7 @@ export async function lookupWorkflow(lookupId: string) {
     for (const clip of clips) results.push(await recogniseStep(clip));
     await completeStep(lookupId, results);
   } catch {
-    await failStep(lookupId, "engines_unavailable");
+    await failStep(lookupId, "engines_unavailable", clips);
   }
 }
 
@@ -42,7 +42,8 @@ async function completeStep(lookupId: string, results: ClipResult[]) {
 async function failStep(
   lookupId: string,
   reason: "unavailable" | "engines_unavailable",
+  clips: Clip[] = [],
 ) {
   "use step";
-  await lookupService().fail(lookupId, reason);
+  await lookupService().fail(lookupId, reason, clips);
 }
