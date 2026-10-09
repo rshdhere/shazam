@@ -1,6 +1,7 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { lookupService } from "../../../lib/lookup";
-import styles from "../../page.module.css";
+import styles from "../../ui.module.css";
 import { LookupView } from "./lookup-view";
 
 export default async function LookupPage({
@@ -12,8 +13,10 @@ export default async function LookupPage({
   const lookup = await lookupService().get(id);
   if (!lookup) notFound();
   return (
-    <div className={styles.page}>
-      <h1>What song is this?</h1>
+    <main className={styles.shell}>
+      <h1 className={styles.heading}>
+        <Link href="/">What&rsquo;s that song?</Link>
+      </h1>
       <LookupView
         id={lookup.id}
         initial={{
@@ -24,6 +27,9 @@ export default async function LookupPage({
           failureReason: lookup.failureReason,
         }}
       />
-    </div>
+      <p className={styles.again}>
+        <Link href="/">Identify another link</Link>
+      </p>
+    </main>
   );
 }

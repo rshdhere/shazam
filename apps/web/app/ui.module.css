@@ -1,0 +1,394 @@
+.shell {
+  max-width: var(--measure);
+  margin-inline: auto;
+  padding: clamp(2.5rem, 10vh, 6rem) var(--gutter) 4rem;
+}
+
+/* Home */
+
+.hero {
+  font-family: var(--font-display-stack);
+  font-weight: 800;
+  font-size: var(--step-hero);
+  line-height: 0.88;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.lede {
+  max-width: 34ch;
+  margin-top: 2rem;
+  font-size: var(--step-1);
+  line-height: 1.4;
+}
+
+.form {
+  margin-top: 2.5rem;
+}
+
+.field {
+  display: flex;
+  align-items: stretch;
+  border: 2px solid var(--night-line);
+  border-radius: 14px;
+  background: var(--night-raised);
+  transition: border-color 150ms ease;
+}
+
+.field:focus-within {
+  border-color: var(--amber);
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  padding: 1.1rem 1rem;
+  border: none;
+  background: transparent;
+  color: var(--paper);
+  font: inherit;
+  font-size: var(--step-1);
+}
+
+.input::placeholder {
+  color: var(--lilac);
+  opacity: 0.7;
+}
+
+.input:focus-visible {
+  outline: none;
+}
+
+.button {
+  margin: 6px;
+  padding: 0 1.5rem;
+  border: none;
+  border-radius: 9px;
+  background: var(--amber);
+  color: var(--night);
+  font-family: var(--font-display-stack);
+  font-weight: 800;
+  font-size: var(--step-1);
+  cursor: pointer;
+}
+
+.button:disabled {
+  cursor: progress;
+}
+
+.error {
+  margin-top: 0.75rem;
+  color: var(--coral);
+}
+
+.recent {
+  margin-top: 3.5rem;
+}
+
+.recentHeading {
+  font-family: var(--font-display-stack);
+  font-weight: 600;
+  font-size: var(--step-1);
+  color: var(--lilac);
+}
+
+.recentList {
+  list-style: none;
+  margin-top: 0.5rem;
+}
+
+.recentLink {
+  display: flex;
+  flex-direction: column;
+  padding-block: 0.75rem;
+  border-top: 1px solid var(--night-line);
+  text-decoration: none;
+}
+
+.recentTitle {
+  font-weight: 700;
+}
+
+.recentSource {
+  color: var(--lilac);
+  font-size: var(--step--1);
+  overflow-wrap: anywhere;
+}
+
+.recentLink:hover .recentTitle,
+.recentLink:hover .recentSource {
+  color: var(--amber);
+}
+
+/* Lookup page */
+
+.heading {
+  font-family: var(--font-display-stack);
+  font-weight: 800;
+  font-size: var(--step-3);
+  line-height: 1;
+}
+
+.heading a {
+  text-decoration: none;
+}
+
+.source {
+  margin-top: 0.75rem;
+  color: var(--lilac);
+  overflow-wrap: anywhere;
+}
+
+.stage {
+  font-size: var(--step-1);
+  line-height: 1.35;
+}
+
+.dial + .stage,
+.dial + .error {
+  margin-top: 1.25rem;
+}
+
+.dial {
+  margin-top: 2.5rem;
+}
+
+.dialTicks {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  height: 64px;
+  border-bottom: 1px solid var(--night-line);
+}
+
+.tick {
+  width: 2px;
+  height: 16px;
+  border-radius: 1px;
+  background: var(--night-line);
+  transform-origin: bottom;
+}
+
+.tick[data-major] {
+  height: 36px;
+  background: var(--lilac);
+}
+
+.tick[data-passed] {
+  background: var(--amber-dim);
+}
+
+.tick[data-major][data-passed] {
+  background: var(--amber);
+}
+
+.needle {
+  position: absolute;
+  top: -4px;
+  bottom: -8px;
+  left: calc(var(--needle) * (100% - 4px));
+  width: 4px;
+  border-radius: 2px;
+  background: var(--amber);
+  box-shadow: 0 0 14px 3px rgb(255 181 71 / 0.5);
+  transition: left 700ms cubic-bezier(0.3, 1.35, 0.5, 1);
+}
+
+.dial[data-status="failed"] .needle {
+  background: var(--coral);
+  box-shadow: 0 0 14px 3px rgb(255 143 126 / 0.45);
+}
+
+/* While listening, the scale hums like a level meter. */
+.dial[data-status="listening"] .tick {
+  animation: hum 900ms ease-in-out infinite alternate;
+  animation-delay: calc(var(--i) * -137ms);
+}
+
+@keyframes hum {
+  from {
+    transform: scaleY(0.35);
+  }
+  to {
+    transform: scaleY(1.6);
+  }
+}
+
+.dialLabels {
+  position: relative;
+  height: 1.75rem;
+  margin-top: 0.5rem;
+  list-style: none;
+  color: var(--lilac);
+  font-size: var(--step--1);
+}
+
+.dialLabels li {
+  position: absolute;
+  top: 0;
+  white-space: nowrap;
+}
+
+.dialLabels li:nth-child(1) {
+  left: 0;
+}
+
+.dialLabels li:nth-child(2) {
+  left: 33.333%;
+  transform: translateX(-50%);
+}
+
+.dialLabels li:nth-child(3) {
+  left: 66.667%;
+  transform: translateX(-50%);
+}
+
+.dialLabels li:nth-child(4) {
+  right: 0;
+}
+
+.dialLabels li[data-current] {
+  color: var(--paper);
+  font-weight: 700;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dial[data-status="listening"] .tick {
+    animation: none;
+  }
+
+  .needle,
+  .field {
+    transition: none;
+  }
+}
+
+.matches {
+  list-style: none;
+  margin-top: 2rem;
+}
+
+.match {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: 1.25rem;
+  padding-block: 1.25rem;
+  border-top: 1px solid var(--night-line);
+}
+
+.artwork,
+.record {
+  width: 96px;
+  height: 96px;
+  border-radius: 6px;
+}
+
+.artwork {
+  object-fit: cover;
+  background: var(--night-raised);
+}
+
+/* No artwork: a record with an amber label. */
+.record {
+  display: block;
+  border-radius: 50%;
+  background:
+    radial-gradient(
+      circle,
+      var(--night) 0 4%,
+      var(--amber) 4% 28%,
+      transparent 28%
+    ),
+    repeating-radial-gradient(
+      circle,
+      #2d2452 0 2px,
+      #231c40 2px 4px
+    );
+}
+
+.matchBody {
+  min-width: 0;
+}
+
+.matchTitle {
+  font-family: var(--font-display-stack);
+  font-weight: 800;
+  font-size: var(--step-2);
+  line-height: 1;
+  overflow-wrap: anywhere;
+}
+
+.matchArtist {
+  margin-top: 0.35rem;
+}
+
+.matchWhen {
+  color: var(--lilac);
+  font-size: var(--step--1);
+}
+
+.matchWhen time {
+  color: var(--amber);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.listen {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  list-style: none;
+}
+
+.listen a {
+  display: inline-block;
+  padding: 0.3rem 0.85rem;
+  border: 1px solid var(--night-line);
+  border-radius: 999px;
+  font-size: var(--step--1);
+  text-decoration: none;
+}
+
+.listen a:hover {
+  border-color: var(--amber);
+  color: var(--amber);
+}
+
+.tag {
+  margin-top: 2rem;
+  padding-left: 1rem;
+  border-left: 3px solid var(--amber-dim);
+  color: var(--lilac);
+}
+
+.again {
+  margin-top: 3rem;
+}
+
+.again a {
+  color: var(--amber);
+  text-underline-offset: 0.2em;
+}
+
+@media (max-width: 30rem) {
+  .field {
+    flex-direction: column;
+  }
+
+  .button {
+    padding-block: 0.85rem;
+  }
+
+  .match {
+    grid-template-columns: 64px 1fr;
+    gap: 1rem;
+  }
+
+  .artwork,
+  .record {
+    width: 64px;
+    height: 64px;
+  }
+}
