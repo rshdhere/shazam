@@ -4,3 +4,8 @@ packages:
   - "packages/api/*"
   - "packages/services/*"
   - "tooling/*"
+  - "tests/*"
+allowBuilds:
+  "@swc/core": true
+  cbor-extract: true
+  esbuild: true

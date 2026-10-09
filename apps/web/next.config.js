@@ -1,4 +1,13 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {};
+import { withWorkflow } from "workflow/next";
 
-export default nextConfig;
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  transpilePackages: [
+    "@shazam/lookup",
+    "@shazam/drizzle",
+    "@shazam/validators",
+    "@shazam/types",
+  ],
+};
+
+export default withWorkflow(nextConfig);

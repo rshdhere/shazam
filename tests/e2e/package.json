@@ -1,0 +1,14 @@
+{
+  "name": "@shazam/e2e-tests",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test:e2e": "vitest run",
+    "check-types": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "26.4.1",
+    "typescript": "7.0.2",
+    "vitest": "^5.0.3"
+  }
+}

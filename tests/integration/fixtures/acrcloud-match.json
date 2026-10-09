@@ -1,0 +1,32 @@
+{
+  "status": { "msg": "Success", "code": 0, "version": "1.0" },
+  "metadata": {
+    "timestamp_utc": "2026-10-09 07:30:12",
+    "music": [
+      {
+        "external_ids": { "isrc": "GBARL9300135", "upc": "886445379862" },
+        "play_offset_ms": 9180,
+        "external_metadata": {
+          "spotify": {
+            "track": { "name": "Never Gonna Give You Up", "id": "4PTG3Z6ehGkBFwjybzWkR8" },
+            "artists": [{ "name": "Rick Astley" }],
+            "album": { "name": "Whenever You Need Somebody" }
+          },
+          "deezer": { "track": { "id": "781592622", "name": "Never Gonna Give You Up" } },
+          "youtube": { "vid": "dQw4w9WgXcQ" }
+        },
+        "title": "Never Gonna Give You Up",
+        "artists": [{ "name": "Rick Astley" }],
+        "album": { "name": "Whenever You Need Somebody" },
+        "label": "RCA Records Label",
+        "acrid": "6049f11da7095e8bb8266871d4a70873",
+        "result_from": 3,
+        "score": 100,
+        "duration_ms": 213573,
+        "release_date": "1987-11-12"
+      }
+    ]
+  },
+  "cost_time": 0.69,
+  "result_type": 0
+}
