@@ -33,6 +33,19 @@ function meaningfulTag(tag: { title: string; artist: string | null } | null) {
   return { title: tag.title.trim(), artist: tag.artist?.trim() || null };
 }
 
+/** How many times a step runs before giving up: a Workflow step retries 3 times by default. */
+const STEP_ATTEMPTS = 4;
+
+async function withRetries<T>(step: () => Promise<T>): Promise<T> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await step();
+    } catch (error) {
+      if (attempt >= STEP_ATTEMPTS) throw error;
+    }
+  }
+}
+
 export type SubmitResult =
   | { ok: true; outcome: "started" | "joined" | "reused"; lookup: Lookup }
   | { ok: false; error: "unsupported_link" };
@@ -176,12 +189,27 @@ export function createLookupService(deps: LookupServiceDeps) {
     return result.clips;
   }
 
-  /** Step 2: ask each engine in order until one hears a song in the Clip. */
+  /**
+   * Step 2: ask each engine in order until one hears a song in the Clip.
+   * An engine that errors is skipped; if every engine errors, this throws so
+   * the step can be retried.
+   */
   async function recognise(clip: Clip): Promise<ClipResult> {
+    let lastError: unknown;
+    let answered = false;
     for (const engine of engines) {
-      const hit = await engine.identify(clip);
-      if (hit) return { clip, hit };
+      try {
+        const hit = await engine.identify(clip);
+        if (hit) return { clip, hit };
+        answered = true;
+      } catch (error) {
+        lastError = error;
+      }
     }
+    if (!answered)
+      throw new Error("Every recognition engine is unavailable", {
+        cause: lastError,
+      });
     return { clip, hit: null };
   }
 
@@ -202,13 +230,24 @@ export function createLookupService(deps: LookupServiceDeps) {
     if (clips.length) await extractor.discard(clips);
   }
 
-  /** Runs every step inline; the Workflow runs the same steps durably. */
+  /** Runs every step inline, with the same retries and failures as the Workflow. */
   async function run(id: string) {
-    const clips = await extract(id);
+    let clips: Clip[] | null;
+    try {
+      clips = await withRetries(() => extract(id));
+    } catch {
+      await fail(id, "unavailable");
+      return;
+    }
     if (!clips) return;
-    const results: ClipResult[] = [];
-    for (const clip of clips) results.push(await recognise(clip));
-    await complete(id, results);
+    try {
+      const results: ClipResult[] = [];
+      for (const clip of clips)
+        results.push(await withRetries(() => recognise(clip)));
+      await complete(id, results);
+    } catch {
+      await fail(id, "engines_unavailable", clips);
+    }
   }
 
   return { submit, get, extract, recognise, complete, fail, run };

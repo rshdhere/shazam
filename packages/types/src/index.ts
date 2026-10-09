@@ -50,7 +50,8 @@ export interface PlatformTag {
 export type LookupStatus =
   "queued" | "fetching" | "listening" | "completed" | "failed";
 
-export type FailureReason = "unavailable" | "blocked" | "engines_unavailable";
+export type FailureReason =
+  "unavailable" | "blocked" | "too_long" | "engines_unavailable";
 
 export interface Lookup {
   id: string;

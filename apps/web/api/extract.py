@@ -1,9 +1,9 @@
 """Extractor: fetches the media behind a Link and cuts audio Clips from it.
 
-POST JSON {url, maxClips, clipSeconds, skipSeconds}
+POST JSON {url, maxClips, clipSeconds, skipSeconds, maxDurationSeconds}
   -> {ok: true, durationSeconds, platformTag: {title, artist} | null,
       clips: [{offsetSeconds, audioBase64}]}
-  -> {ok: false, reason: "unavailable" | "blocked"}
+  -> {ok: false, reason: "unavailable" | "blocked" | "too_long"}
 
 Runs as a Vercel Python Function; `python3 api/extract.py` serves it locally.
 """
@@ -69,6 +69,11 @@ def platform_tag(info):
     return {"title": title, "artist": ", ".join(artists) or None}
 
 
+def too_long(info, max_duration):
+    """Live streams never end; anything over the cap is refused before downloading."""
+    return bool(info.get("is_live")) or float(info.get("duration") or 0) > max_duration
+
+
 def classify(error):
     message = str(error).lower()
     return "blocked" if any(hint in message for hint in BLOCKED_HINTS) else "unavailable"
@@ -89,6 +94,8 @@ def extract(request):
         with yt_dlp.YoutubeDL(options) as ydl:
             try:
                 info = ydl.extract_info(request["url"], download=False)
+                if too_long(info, float(request.get("maxDurationSeconds") or 600)):
+                    return {"ok": False, "reason": "too_long"}
                 duration = float(info.get("duration") or 0)
                 ydl.process_ie_result(info, download=True)
             except yt_dlp.utils.DownloadError as error:

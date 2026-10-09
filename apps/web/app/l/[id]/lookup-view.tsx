@@ -1,6 +1,11 @@
 "use client";
 
-import type { LookupStatus, Match, PlatformTag } from "@shazam/types";
+import type {
+  FailureReason,
+  LookupStatus,
+  Match,
+  PlatformTag,
+} from "@shazam/types";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import styles from "../../page.module.css";
@@ -10,7 +15,7 @@ export interface LookupSnapshot {
   status: LookupStatus;
   matches: Match[];
   platformTag: PlatformTag | null;
-  failureReason: string | null;
+  failureReason: FailureReason | null;
 }
 
 const POLL_MS = 1500;
@@ -21,6 +26,16 @@ const PLATFORM_NAMES: Record<PlatformTag["platform"], string> = {
   x: "X",
   pinterest: "Pinterest",
   tiktok: "TikTok",
+};
+
+const FAILURE_MESSAGES: Record<FailureReason, string> = {
+  unavailable:
+    "We couldn't open that post. It may be private, deleted or not available in our region.",
+  blocked:
+    "The platform blocked us from fetching that post. Try again later, or try a different link to the same video.",
+  too_long: "That video is longer than 10 minutes. Try a shorter clip.",
+  engines_unavailable:
+    "Our song recognition services are down right now. Try again in a few minutes.",
 };
 
 function isDone(status: LookupStatus) {
@@ -55,7 +70,9 @@ export function LookupView({
       </p>
       <p aria-live="polite">Status: {lookup.status}</p>
       {lookup.status === "failed" && (
-        <p role="alert">Lookup failed ({lookup.failureReason}).</p>
+        <p role="alert">
+          {FAILURE_MESSAGES[lookup.failureReason ?? "unavailable"]}
+        </p>
       )}
       {lookup.platformTag && (
         <p>
@@ -65,7 +82,10 @@ export function LookupView({
         </p>
       )}
       {lookup.status === "completed" && lookup.matches.length === 0 && (
-        <p>No song recognised.</p>
+        <p>
+          No song recognised. We listened to several moments of the video and
+          none of our recognition services knew the music.
+        </p>
       )}
       <ul>
         {lookup.matches.map((m) => (

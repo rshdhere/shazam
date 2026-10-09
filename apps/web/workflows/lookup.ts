@@ -1,4 +1,4 @@
-import type { Clip } from "@shazam/types";
+import type { Clip, FailureReason } from "@shazam/types";
 import type { ClipResult } from "@shazam/lookup";
 import { lookupService } from "../lib/lookup";
 
@@ -41,7 +41,7 @@ async function completeStep(lookupId: string, results: ClipResult[]) {
 
 async function failStep(
   lookupId: string,
-  reason: "unavailable" | "engines_unavailable",
+  reason: FailureReason,
   clips: Clip[] = [],
 ) {
   "use step";

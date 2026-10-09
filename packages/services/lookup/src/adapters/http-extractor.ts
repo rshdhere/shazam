@@ -5,6 +5,8 @@ export interface ClipPlan {
   maxClips: number;
   clipSeconds: number;
   skipSeconds: number;
+  /** Longer media is refused as too_long before anything is downloaded. */
+  maxDurationSeconds: number;
 }
 
 /** Holds Clip audio somewhere engines can fetch it while a Lookup runs. */
@@ -20,7 +22,7 @@ type ExtractorResponse =
       platformTag: { title: string; artist: string | null } | null;
       clips: { offsetSeconds: number; audioBase64: string }[];
     }
-  | { ok: false; reason: "unavailable" | "blocked" };
+  | { ok: false; reason: "unavailable" | "blocked" | "too_long" };
 
 /** Talks to the Python Extractor function over HTTP. */
 export function createHttpExtractor(config: {

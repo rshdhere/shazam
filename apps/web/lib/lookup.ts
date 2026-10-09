@@ -53,7 +53,12 @@ export function lookupService(
     extractor: createHttpExtractor({
       endpoint: extractorEndpoint(),
       headers: extractorHeaders(),
-      plan: { maxClips: 5, clipSeconds: 10, skipSeconds: 2 },
+      plan: {
+        maxClips: 5,
+        clipSeconds: 10,
+        skipSeconds: 2,
+        maxDurationSeconds: 10 * 60,
+      },
       clipStore: process.env.BLOB_READ_WRITE_TOKEN
         ? blobClipStore
         : inlineClipStore,

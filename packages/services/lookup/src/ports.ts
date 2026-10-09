@@ -8,7 +8,7 @@ export type ExtractResult =
       platformTag: { title: string; artist: string | null } | null;
       clips: Clip[];
     }
-  | { ok: false; reason: "unavailable" | "blocked" };
+  | { ok: false; reason: "unavailable" | "blocked" | "too_long" };
 
 /** Fetches the media behind a Link and cuts Clips from it. */
 export interface Extractor {
