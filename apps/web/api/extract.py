@@ -1,9 +1,13 @@
 """Extractor: fetches the media behind a Link and cuts audio Clips from it.
 
-POST JSON {url, maxClips, clipSeconds, skipSeconds, maxDurationSeconds}
+POST JSON {url, platform, maxClips, clipSeconds, skipSeconds, maxDurationSeconds}
   -> {ok: true, durationSeconds, platformTag: {title, artist} | null,
       clips: [{offsetSeconds, audioBase64}]}
   -> {ok: false, reason: "unavailable" | "blocked" | "too_long"}
+
+Optional, off by default, for platforms that block Vercel's IPs:
+  YTDLP_YOUTUBE_COOKIES, YTDLP_INSTAGRAM_COOKIES  Netscape cookies.txt contents
+  YTDLP_PROXY                                     proxy URL for every download
 
 Runs as a Vercel Python Function; `python3 api/extract.py` serves it locally.
 """
@@ -74,13 +78,14 @@ def too_long(info, max_duration):
     return bool(info.get("is_live")) or float(info.get("duration") or 0) > max_duration
 
 
-def classify(error):
-    message = str(error).lower()
-    return "blocked" if any(hint in message for hint in BLOCKED_HINTS) else "unavailable"
+COOKIE_VARS = {
+    "youtube": "YTDLP_YOUTUBE_COOKIES",
+    "instagram": "YTDLP_INSTAGRAM_COOKIES",
+}
 
 
-def extract(request):
-    workdir = tempfile.mkdtemp()
+def ydl_options(request, workdir, env):
+    """yt-dlp options, with the platform's cookies and the proxy when configured."""
     options = {
         "quiet": True,
         "no_warnings": True,
@@ -90,6 +95,30 @@ def extract(request):
         "ffmpeg_location": ffmpeg_path(),
         "socket_timeout": 20,
     }
+    cookies = env.get(COOKIE_VARS.get(request.get("platform"), ""), "")
+    # Env values pasted on one line arrive with literal "\n" separators.
+    if "\n" not in cookies:
+        cookies = cookies.replace("\\n", "\n")
+    cookies = cookies.strip()
+    if cookies:
+        # yt-dlp rewrites its cookie file, so it gets a private copy per Lookup.
+        options["cookiefile"] = os.path.join(workdir, "cookies.txt")
+        with open(options["cookiefile"], "w") as f:
+            f.write(cookies + "\n")
+    proxy = env.get("YTDLP_PROXY", "").strip()
+    if proxy:
+        options["proxy"] = proxy
+    return options
+
+
+def classify(error):
+    message = str(error).lower()
+    return "blocked" if any(hint in message for hint in BLOCKED_HINTS) else "unavailable"
+
+
+def extract(request):
+    workdir = tempfile.mkdtemp()
+    options = ydl_options(request, workdir, os.environ)
     try:
         with yt_dlp.YoutubeDL(options) as ydl:
             try:

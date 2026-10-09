@@ -38,7 +38,11 @@ export function createHttpExtractor(config: {
       const res = await http(config.endpoint, {
         method: "POST",
         headers: { "content-type": "application/json", ...config.headers },
-        body: JSON.stringify({ url: link.url, ...config.plan }),
+        body: JSON.stringify({
+          url: link.url,
+          platform: link.platform,
+          ...config.plan,
+        }),
       });
       if (!res.ok) throw new Error(`Extractor HTTP ${res.status}`);
       const body = (await res.json()) as ExtractorResponse;

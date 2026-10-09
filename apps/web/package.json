@@ -10,7 +10,8 @@
     "lint": "eslint --max-warnings 0",
     "check-types": "next typegen && tsc --noEmit",
     "setup:extractor": "python3 -m venv .venv && .venv/bin/pip install -r requirements.txt",
-    "dev:extractor": ".venv/bin/python api/extract.py"
+    "dev:extractor": ".venv/bin/python api/extract.py",
+    "test:extractor": ".venv/bin/python -m unittest discover -s tests -p \"test_*.py\""
   },
   "dependencies": {
     "@shazam/drizzle": "workspace:*",
