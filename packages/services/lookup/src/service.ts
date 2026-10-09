@@ -245,7 +245,7 @@ export function createLookupService(deps: LookupServiceDeps) {
     try {
       clips = await withRetries(() => extract(id));
     } catch {
-      await fail(id, "unavailable");
+      await fail(id, "extractor_unavailable");
       return;
     }
     if (!clips) return;

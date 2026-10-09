@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useSyncExternalStore } from "react";
-import { shortLink } from "../lib/format";
+import { displayUrl } from "../lib/format";
 import { parseRecent, readRecentRaw, subscribeRecent } from "../lib/recent";
 import styles from "./ui.module.css";
 
@@ -21,10 +21,8 @@ export function RecentLookups() {
           <li key={r.id}>
             <Link href={`/l/${r.id}`} className={styles.recentLink}>
               {r.title && <span className={styles.recentTitle}>{r.title}</span>}
-              <span
-                className={r.title ? styles.recentSource : styles.recentTitle}
-              >
-                {shortLink(r.link)}
+              <span className={r.title ? styles.recentUrl : styles.recentTitle}>
+                {displayUrl(r.link)}
               </span>
             </Link>
           </li>

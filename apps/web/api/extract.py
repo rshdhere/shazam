@@ -15,6 +15,7 @@ Runs as a Vercel Python Function; `python3 api/extract.py` serves it locally.
 import base64
 import json
 import os
+import re
 import shutil
 import subprocess
 import tempfile
@@ -73,6 +74,19 @@ def platform_tag(info):
     return {"title": title, "artist": ", ".join(artists) or None}
 
 
+DURATION = re.compile(r"Duration: (\d+):(\d+):(\d+(?:\.\d+)?)")
+
+
+def probe_duration(path):
+    """Seconds of audio in a downloaded file, or 0 when ffmpeg can't tell."""
+    result = subprocess.run([ffmpeg_path(), "-hide_banner", "-i", path], capture_output=True, text=True)
+    match = DURATION.search(result.stderr)
+    if not match:
+        return 0
+    hours, minutes, seconds = match.groups()
+    return int(hours) * 3600 + int(minutes) * 60 + float(seconds)
+
+
 def too_long(info, max_duration):
     """Live streams never end; anything over the cap is refused before downloading."""
     return bool(info.get("is_live")) or float(info.get("duration") or 0) > max_duration
@@ -119,17 +133,23 @@ def classify(error):
 def extract(request):
     workdir = tempfile.mkdtemp()
     options = ydl_options(request, workdir, os.environ)
+    max_duration = float(request.get("maxDurationSeconds") or 600)
     try:
         with yt_dlp.YoutubeDL(options) as ydl:
             try:
                 info = ydl.extract_info(request["url"], download=False)
-                if too_long(info, float(request.get("maxDurationSeconds") or 600)):
+                if too_long(info, max_duration):
                     return {"ok": False, "reason": "too_long"}
-                duration = float(info.get("duration") or 0)
                 ydl.process_ie_result(info, download=True)
             except yt_dlp.utils.DownloadError as error:
                 return {"ok": False, "reason": classify(error)}
         media = next(os.path.join(workdir, f) for f in os.listdir(workdir) if f.startswith("media."))
+        # Some platforms report no duration, so measure it before cutting any Clips.
+        duration = float(info.get("duration") or 0) or probe_duration(media)
+        if duration > max_duration:
+            return {"ok": False, "reason": "too_long"}
+        if duration <= 0:
+            return {"ok": False, "reason": "unavailable"}
         clips = [
             {"offsetSeconds": round(offset, 2), "audioBase64": base64.b64encode(cut_clip(media, offset, length)).decode()}
             for offset, length in plan_clips(

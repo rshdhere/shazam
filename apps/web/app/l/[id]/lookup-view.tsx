@@ -2,12 +2,13 @@
 
 import type {
   FailureReason,
+  LookupStage,
   LookupStatus,
   Match,
   PlatformTag,
 } from "@shazam/types";
 import { useEffect, useState } from "react";
-import { PLATFORM_NAMES, shortLink } from "../../../lib/format";
+import { displayUrl, PLATFORM_NAMES } from "../../../lib/format";
 import { rememberLookup } from "../../../lib/recent";
 import styles from "../../ui.module.css";
 import { MatchRow } from "./match-row";
@@ -16,6 +17,7 @@ import { StageDial } from "./stage-dial";
 export interface LookupSnapshot {
   link: string;
   status: LookupStatus;
+  stage: LookupStage;
   matches: Match[];
   platformTag: PlatformTag | null;
   failureReason: FailureReason | null;
@@ -23,19 +25,19 @@ export interface LookupSnapshot {
 
 const POLL_MS = 1500;
 
+/** What went wrong, and whether trying again could help. */
 const FAILURE_MESSAGES: Record<FailureReason, string> = {
   unavailable:
-    "We couldn't open that post. It may be private, deleted or not available in our region.",
+    "We couldn't open that post. It may be private, deleted or not available in our region. Trying again won't help unless the post becomes public.",
   blocked:
-    "The platform blocked us from fetching that post. Try again later, or paste a different link to the same video.",
-  too_long: "That video is longer than 10 minutes. Try a shorter clip.",
+    "The platform blocked us from fetching that post. This is usually temporary, so try again in an hour, or paste a different link to the same video.",
+  too_long:
+    "That video is longer than 10 minutes, which is more than we listen to. Trying again won't help; paste a link to a shorter video.",
+  extractor_unavailable:
+    "Our video fetcher is down right now. It isn't your link; try again in an hour.",
   engines_unavailable:
-    "Our song recognition services are down right now. Try again in a few minutes.",
+    "Our song recognition services are down right now. It isn't your link; try again in an hour.",
 };
-
-function isDone(status: LookupStatus) {
-  return status === "completed" || status === "failed";
-}
 
 function stageSentence(lookup: LookupSnapshot) {
   switch (lookup.status) {
@@ -67,7 +69,7 @@ export function LookupView({
   const firstTitle = lookup.matches[0]?.title ?? null;
 
   useEffect(() => {
-    if (isDone(lookup.status)) return;
+    if (lookup.stage === "done") return;
     const timer = setTimeout(async () => {
       try {
         const res = await fetch(`/api/lookups/${id}`, { cache: "no-store" });
@@ -91,9 +93,9 @@ export function LookupView({
 
   return (
     <>
-      <p className={styles.source}>
+      <p className={styles.lookupUrl}>
         <a href={lookup.link} target="_blank" rel="noreferrer">
-          {shortLink(lookup.link)}
+          {displayUrl(lookup.link)}
         </a>
       </p>
 
@@ -120,12 +122,19 @@ export function LookupView({
       )}
 
       {tag && (
-        <p className={styles.tag}>
-          {PLATFORM_NAMES[tag.platform]} labels this audio &ldquo;{tag.title}
-          &rdquo;
-          {tag.artist && ` by ${tag.artist}`}. That&rsquo;s the platform&rsquo;s
-          own credit, not something we heard.
-        </p>
+        <section className={styles.tag} aria-labelledby="tag-heading">
+          <h2 id="tag-heading" className={styles.tagHeading}>
+            Tagged by {PLATFORM_NAMES[tag.platform]}
+          </h2>
+          <p className={styles.tagSong}>
+            {tag.title}
+            {tag.artist && ` by ${tag.artist}`}
+          </p>
+          <p className={styles.tagNote}>
+            The platform&rsquo;s own label for this audio, not something we
+            heard.
+          </p>
+        </section>
       )}
     </>
   );

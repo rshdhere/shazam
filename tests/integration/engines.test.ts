@@ -31,10 +31,11 @@ describe("ACRCloud engine", () => {
         title: "Never Gonna Give You Up",
         artist: "Rick Astley",
         album: "Whenever You Need Somebody",
-        artworkUrl: null,
+        artworkUrl: "https://api.deezer.com/album/6575789/image?size=big",
         isrc: "GBARL9300135",
         spotifyUrl: "https://open.spotify.com/track/4PTG3Z6ehGkBFwjybzWkR8",
-        appleMusicUrl: null,
+        appleMusicUrl:
+          "https://music.apple.com/search?term=Never%20Gonna%20Give%20You%20Up%20Rick%20Astley",
         youtubeUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
       },
     });
@@ -43,6 +44,31 @@ describe("ACRCloud engine", () => {
     expect(form.get("data_type")).toBe("audio");
     expect(form.get("sample_bytes")).toBe("4");
     expect(form.get("signature")).toMatch(/^[A-Za-z0-9+/]+=*$/);
+  });
+
+  it("discards a song heard below its confidence threshold", async () => {
+    const unsure = structuredClone(match);
+    unsure.metadata.music[0]!.score = 50;
+    const { fetch } = replayFetch({
+      "https://blob.test/": audio(),
+      "https://identify-eu-west-1.acrcloud.com/v1/identify": json(unsure),
+    });
+    const engine = createAcrCloudEngine({ ...credentials, fetch });
+
+    expect(await engine.identify(clip(2))).toBeNull();
+  });
+
+  it("leaves artwork empty when ACRCloud knows no Deezer album", async () => {
+    const bare = structuredClone(match);
+    delete (bare.metadata.music[0]!.external_metadata as { deezer?: unknown })
+      .deezer;
+    const { fetch } = replayFetch({
+      "https://blob.test/": audio(),
+      "https://identify-eu-west-1.acrcloud.com/v1/identify": json(bare),
+    });
+    const engine = createAcrCloudEngine({ ...credentials, fetch });
+
+    expect((await engine.identify(clip(2)))?.song.artworkUrl).toBeNull();
   });
 
   it("returns null when ACRCloud hears no song", async () => {

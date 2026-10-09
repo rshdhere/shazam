@@ -1,4 +1,4 @@
-import type { Clip, Link } from "@shazam/types";
+import type { Clip, ExtractFailureReason, Link } from "@shazam/types";
 import type { Extractor, ExtractResult } from "../ports";
 
 export interface ClipPlan {
@@ -22,7 +22,7 @@ type ExtractorResponse =
       platformTag: { title: string; artist: string | null } | null;
       clips: { offsetSeconds: number; audioBase64: string }[];
     }
-  | { ok: false; reason: "unavailable" | "blocked" | "too_long" };
+  | { ok: false; reason: ExtractFailureReason };
 
 /** Talks to the Python Extractor function over HTTP. */
 export function createHttpExtractor(config: {

@@ -109,14 +109,14 @@
   font-weight: 700;
 }
 
-.recentSource {
+.recentUrl {
   color: var(--lilac);
   font-size: var(--step--1);
   overflow-wrap: anywhere;
 }
 
 .recentLink:hover .recentTitle,
-.recentLink:hover .recentSource {
+.recentLink:hover .recentUrl {
   color: var(--amber);
 }
 
@@ -133,7 +133,7 @@
   text-decoration: none;
 }
 
-.source {
+.lookupUrl {
   margin-top: 0.75rem;
   color: var(--lilac);
   overflow-wrap: anywhere;
@@ -358,9 +358,28 @@
 
 .tag {
   margin-top: 2rem;
-  padding-left: 1rem;
+  padding: 1rem 1.25rem;
   border-left: 3px solid var(--amber-dim);
+  border-radius: 0 8px 8px 0;
+  background: var(--night-raised);
+}
+
+.tagHeading {
+  font-family: var(--font-display-stack);
+  font-weight: 600;
+  font-size: var(--step-1);
   color: var(--lilac);
+}
+
+.tagSong {
+  margin-top: 0.25rem;
+  font-weight: 700;
+}
+
+.tagNote {
+  margin-top: 0.25rem;
+  color: var(--lilac);
+  font-size: var(--step--1);
 }
 
 .again {

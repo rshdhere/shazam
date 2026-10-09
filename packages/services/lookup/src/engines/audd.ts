@@ -29,11 +29,15 @@ export function createAuddEngine(config: {
   return {
     name: "audd",
     async identify(clip: Clip): Promise<Hit | null> {
-      const sample = await (await http(clip.url)).arrayBuffer();
+      const clipAudio = await (await http(clip.url)).arrayBuffer();
       const form = new FormData();
       form.set("api_token", config.apiToken);
       form.set("return", "apple_music,spotify");
-      form.set("file", new Blob([sample], { type: "audio/mpeg" }), "clip.mp3");
+      form.set(
+        "file",
+        new Blob([clipAudio], { type: "audio/mpeg" }),
+        "clip.mp3",
+      );
 
       const res = await http("https://api.audd.io/", {
         method: "POST",

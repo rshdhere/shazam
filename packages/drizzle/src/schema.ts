@@ -25,7 +25,7 @@ export const lookups = pgTable(
   },
   (t) => [
     index("lookups_link_idx").on(t.platform, t.mediaId, t.createdAt),
-    // At most one running Lookup per canonical Link.
+    // At most one running Lookup per canonical Link; keep in step with RUNNING_STATUSES.
     uniqueIndex("lookups_one_running_per_link")
       .on(t.platform, t.mediaId)
       .where(sql`${t.status} in ('queued', 'fetching', 'listening')`),

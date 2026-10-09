@@ -1,4 +1,10 @@
-import type { Clip, EngineName, Hit, Link } from "@shazam/types";
+import type {
+  Clip,
+  EngineName,
+  ExtractFailureReason,
+  Hit,
+  Link,
+} from "@shazam/types";
 
 export type ExtractResult =
   | {
@@ -8,7 +14,7 @@ export type ExtractResult =
       platformTag: { title: string; artist: string | null } | null;
       clips: Clip[];
     }
-  | { ok: false; reason: "unavailable" | "blocked" | "too_long" };
+  | { ok: false; reason: ExtractFailureReason };
 
 /** Fetches the media behind a Link and cuts Clips from it. */
 export interface Extractor {

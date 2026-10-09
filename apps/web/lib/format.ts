@@ -15,7 +15,7 @@ export function formatTimestamp(seconds: number) {
 }
 
 /** "https://www.youtube.com/watch?v=abc" → "youtube.com/watch?v=abc" */
-export function shortLink(url: string) {
+export function displayUrl(url: string) {
   try {
     const u = new URL(url);
     return `${u.hostname.replace(/^www\./, "")}${u.pathname}${u.search}`.replace(

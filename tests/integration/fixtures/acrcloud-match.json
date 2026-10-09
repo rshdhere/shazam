@@ -12,7 +12,10 @@
             "artists": [{ "name": "Rick Astley" }],
             "album": { "name": "Whenever You Need Somebody" }
           },
-          "deezer": { "track": { "id": "781592622", "name": "Never Gonna Give You Up" } },
+          "deezer": {
+            "track": { "id": "781592622", "name": "Never Gonna Give You Up" },
+            "album": { "id": "6575789", "name": "Whenever You Need Somebody" }
+          },
           "youtube": { "vid": "dQw4w9WgXcQ" }
         },
         "title": "Never Gonna Give You Up",

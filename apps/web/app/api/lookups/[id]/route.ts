@@ -1,3 +1,4 @@
+import { stageOf } from "@shazam/types";
 import { lookupService } from "../../../../lib/lookup";
 
 export async function GET(
@@ -11,6 +12,7 @@ export async function GET(
       id: lookup.id,
       link: lookup.link.url,
       status: lookup.status,
+      stage: stageOf(lookup.status),
       matches: lookup.matches,
       platformTag: lookup.platformTag,
       failureReason: lookup.failureReason,

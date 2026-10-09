@@ -10,7 +10,7 @@ export async function lookupWorkflow(lookupId: string) {
   try {
     clips = await extractStep(lookupId);
   } catch {
-    await failStep(lookupId, "unavailable");
+    await failStep(lookupId, "extractor_unavailable");
     return;
   }
   if (!clips) return;

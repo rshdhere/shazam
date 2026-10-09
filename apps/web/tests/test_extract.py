@@ -10,7 +10,8 @@ import unittest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "api"))
 
-from extract import ydl_options  # noqa: E402
+from extract import ffmpeg_path, probe_duration, ydl_options  # noqa: E402
+import subprocess  # noqa: E402
 
 COOKIES = "# Netscape HTTP Cookie File\n.youtube.com\tTRUE\t/\tTRUE\t0\tSID\tabc\n"
 
@@ -59,6 +60,25 @@ class YdlOptionsTest(unittest.TestCase):
         for platform in ("youtube", "instagram", "x", "pinterest", "tiktok"):
             options = self.options(platform, {"YTDLP_PROXY": "http://user:pass@proxy.test:8080"})
             self.assertEqual(options["proxy"], "http://user:pass@proxy.test:8080")
+
+
+class ProbeDurationTest(unittest.TestCase):
+    """yt-dlp reports no duration for some media, so it is measured after download."""
+
+    def test_measures_downloaded_audio(self):
+        path = os.path.join(tempfile.mkdtemp(), "media.mp3")
+        subprocess.run(
+            [ffmpeg_path(), "-v", "error", "-f", "lavfi", "-i", "anullsrc=r=44100:cl=mono",
+             "-t", "3.5", path],
+            check=True,
+        )
+        self.assertAlmostEqual(probe_duration(path), 3.5, delta=0.1)
+
+    def test_is_zero_when_unreadable(self):
+        path = os.path.join(tempfile.mkdtemp(), "media.mp3")
+        with open(path, "w") as f:
+            f.write("not audio")
+        self.assertEqual(probe_duration(path), 0)
 
 
 if __name__ == "__main__":

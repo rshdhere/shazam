@@ -1,4 +1,4 @@
-import type { Lookup } from "@shazam/types";
+import { stageOf, type Lookup } from "@shazam/types";
 
 const HOUR = 60 * 60 * 1000;
 /** Engine catalogues grow, so "no song recognised" deserves another try after a week. */
@@ -7,11 +7,7 @@ const NO_MATCH_REUSE_MS = 7 * 24 * HOUR;
 const FAILED_REUSE_MS = HOUR;
 
 export function isRunning(lookup: Lookup): boolean {
-  return (
-    lookup.status === "queued" ||
-    lookup.status === "fetching" ||
-    lookup.status === "listening"
-  );
+  return stageOf(lookup.status) !== "done";
 }
 
 /** Whether a finished Lookup still answers for its Link, or a fresh one should run. */

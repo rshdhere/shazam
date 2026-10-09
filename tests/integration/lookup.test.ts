@@ -1,3 +1,4 @@
+import { RUNNING_STATUSES, stageOf } from "@shazam/types";
 import { selectEngines } from "@shazam/lookup";
 import { describe, expect, it } from "vitest";
 import {
@@ -172,5 +173,17 @@ describe("Recognition engines", () => {
 
     expect(lookup.matches.map((m) => m.title)).toEqual(["AudD Answer"]);
     expect(acrcloud.calls).toEqual([]);
+  });
+});
+
+describe("Stage", () => {
+  it("reports running statuses as their stage and any finished Lookup as done", () => {
+    expect(RUNNING_STATUSES.map(stageOf)).toEqual([
+      "queued",
+      "fetching",
+      "listening",
+    ]);
+    expect(stageOf("completed")).toBe("done");
+    expect(stageOf("failed")).toBe("done");
   });
 });

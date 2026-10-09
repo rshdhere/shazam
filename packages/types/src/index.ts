@@ -50,8 +50,30 @@ export interface PlatformTag {
 export type LookupStatus =
   "queued" | "fetching" | "listening" | "completed" | "failed";
 
+/** Statuses of a Lookup still at work; at most one per Link at a time. */
+export const RUNNING_STATUSES = [
+  "queued",
+  "fetching",
+  "listening",
+] as const satisfies readonly LookupStatus[];
+
+/** What the visitor sees the Lookup doing: its status, with finished ones as "done". */
+export type LookupStage = (typeof RUNNING_STATUSES)[number] | "done";
+
+export function stageOf(status: LookupStatus): LookupStage {
+  return (RUNNING_STATUSES as readonly LookupStatus[]).includes(status)
+    ? (status as LookupStage)
+    : "done";
+}
+
+/** Why the Extractor refused a Link's media. */
+export type ExtractFailureReason = "unavailable" | "blocked" | "too_long";
+
 export type FailureReason =
-  "unavailable" | "blocked" | "too_long" | "engines_unavailable";
+  | ExtractFailureReason
+  /** Our Extractor itself kept erroring or timing out. */
+  | "extractor_unavailable"
+  | "engines_unavailable";
 
 export interface Lookup {
   id: string;

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { stageOf } from "@shazam/types";
 import { notFound } from "next/navigation";
 import { lookupService } from "../../../lib/lookup";
 import styles from "../../ui.module.css";
@@ -22,6 +23,7 @@ export default async function LookupPage({
         initial={{
           link: lookup.link.url,
           status: lookup.status,
+          stage: stageOf(lookup.status),
           matches: lookup.matches,
           platformTag: lookup.platformTag,
           failureReason: lookup.failureReason,

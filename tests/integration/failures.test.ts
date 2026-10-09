@@ -47,7 +47,7 @@ describe("Media the Extractor cannot use", () => {
     },
   );
 
-  it("fails as unavailable when the Extractor itself errors", async () => {
+  it("fails as extractor_unavailable when the Extractor itself keeps erroring", async () => {
     const { engine } = fakeEngine("acrcloud", {});
     const app = await createTestApp({
       extractor: {
@@ -62,7 +62,7 @@ describe("Media the Extractor cannot use", () => {
     const lookup = await app.submitAndRun(RICK);
 
     expect(lookup.status).toBe("failed");
-    expect(lookup.failureReason).toBe("unavailable");
+    expect(lookup.failureReason).toBe("extractor_unavailable");
   });
 });
 
