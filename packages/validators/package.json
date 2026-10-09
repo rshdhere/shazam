@@ -1,10 +1,19 @@
 {
-  "name": "validators",
-  "module": "src/index.ts",
+  "name": "@shazam/validators",
   "type": "module",
   "private": true,
   "devDependencies": {
     "@types/bun": "1.4.2",
     "typescript": "7.0.2"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@shazam/types": "workspace:*",
+    "zod": "^4.6.5"
   }
 }

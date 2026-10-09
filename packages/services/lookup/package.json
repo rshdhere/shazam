@@ -1,0 +1,22 @@
+{
+  "name": "@shazam/lookup",
+  "type": "module",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "26.4.1",
+    "typescript": "7.0.2"
+  },
+  "dependencies": {
+    "@shazam/drizzle": "workspace:*",
+    "@shazam/types": "workspace:*",
+    "@shazam/validators": "workspace:*",
+    "@vercel/blob": "^2.8.1",
+    "drizzle-orm": "^0.45.3"
+  }
+}

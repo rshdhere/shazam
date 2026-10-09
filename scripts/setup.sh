@@ -297,15 +297,45 @@ set_vercel_env EXTRACTOR_SECRET "$EXTRACTOR_SECRET"
 pause
 
 stage "Optional: cookies and proxy for blocked platforms"
-say "Leave these unset at launch. Set them only when YouTube/Instagram start"
-say "refusing downloads from Vercel (Lookups fail with 'blocked')."
-note "YTDLP_YOUTUBE_COOKIES   Netscape cookies.txt contents for youtube.com"
-note "YTDLP_INSTAGRAM_COOKIES Netscape cookies.txt contents for instagram.com"
-note "YTDLP_PROXY             e.g. http://user:pass@proxy.example:8080"
-warn "Instagram cookies must come from a throwaway account, NEVER your personal one:"
-warn "the account can get flagged or banned."
-note "Export cookies with a 'Get cookies.txt LOCALLY' browser extension while"
-note "signed in, then: vercel env add YTDLP_INSTAGRAM_COOKIES production < cookies.txt"
+say "Skip all of these at launch: with none set the Extractor behaves as normal."
+say "Come back only when Lookups start failing with 'blocked' (the platform is"
+say "refusing downloads from Vercel's servers). Re-run this wizard to add them."
+echo
+step "YTDLP_YOUTUBE_COOKIES: Netscape cookies.txt for youtube.com"
+note "1. In a private window, sign in to YouTube with a spare Google account."
+note "2. Export youtube.com cookies with the 'Get cookies.txt LOCALLY' extension."
+note "3. Close the private window without signing out, so the cookies stay valid."
+step "YTDLP_INSTAGRAM_COOKIES: Netscape cookies.txt for instagram.com"
+warn "Use a throwaway Instagram account, NEVER your personal one:"
+warn "automated downloads can get the account flagged or banned."
+note "Sign in to the burner account and export instagram.com cookies the same way."
+step "YTDLP_PROXY: a proxy every download goes through"
+note "e.g. http://user:pass@proxy.example:8080 from a residential proxy provider."
+note "Use it if cookies alone don't get past the block."
+echo
+set_cookies() {
+  local name="$1" file=""
+  confirm "Set $name from a cookies.txt file now?" || return 0
+  printf '  %sPath to cookies.txt:%s ' "$BOLD" "$RESET"
+  read -r file || true
+  file="${file/#\~/$HOME}"
+  if [[ ! -f "$file" ]]; then
+    warn "no file at '$file'; skipped $name"
+    SKIPPED+=("$name (re-run the wizard with a cookies.txt file)")
+    return 0
+  fi
+  set_vercel_env "$name" "$(cat "$file")"
+  # .env.local values are single-line; the Extractor turns \n back into newlines.
+  write_env "$name" "$(awk '{printf "%s\\n", $0}' "$file")"
+}
+set_cookies YTDLP_YOUTUBE_COOKIES
+set_cookies YTDLP_INSTAGRAM_COOKIES
+ask YTDLP_PROXY "Proxy URL [blank to skip]:"
+if [[ -n "$YTDLP_PROXY" ]]; then
+  write_env YTDLP_PROXY "$YTDLP_PROXY"
+  set_vercel_env YTDLP_PROXY "$YTDLP_PROXY"
+fi
+note "To switch one off later: vercel env rm <NAME> production preview development"
 pause
 
 stage "Pull env, migrate the database, deploy"

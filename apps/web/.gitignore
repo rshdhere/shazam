@@ -34,3 +34,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+.venv
+/.swc
+
+# generated
+app/.well-known/workflow
+.swc
+.workflow-data
+__pycache__

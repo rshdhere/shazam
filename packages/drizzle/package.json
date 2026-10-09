@@ -1,10 +1,25 @@
 {
-  "name": "drizzle",
-  "module": "src/index.ts",
+  "name": "@shazam/drizzle",
   "type": "module",
   "private": true,
   "devDependencies": {
     "@types/bun": "1.4.2",
+    "@types/node": "26.4.1",
+    "drizzle-kit": "^0.31.11",
     "typescript": "7.0.2"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./neon": "./src/neon.ts",
+    "./migrations": "./src/migrations-folder.ts"
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "node --env-file-if-exists=../../apps/web/.env.local scripts/migrate.ts"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^1.2.0",
+    "drizzle-orm": "^0.45.3"
   }
 }
